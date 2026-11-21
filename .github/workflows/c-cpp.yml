@@ -1,0 +1,35 @@
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: xmake-io/github-action-setup-xmake@v1
+
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/AppData/Local/.xmake
+          key: xmake-${{ hashFiles('xmake.lua') }}
+          restore-keys: |
+            xmake-
+
+      - name: Update xmake repo
+        run: xmake repo -u
+
+      - name: Configure
+        run: xmake f -p windows -a x64 -m release -y
+
+      - name: Build
+        run: xmake -v -y
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ github.event.repository.name }}-${{ github.sha }}-windows-x64
+          path: |
+            build/windows/x64/release/
